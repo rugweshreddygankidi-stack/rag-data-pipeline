@@ -5,7 +5,14 @@ removes PII, chunks, deduplicates, embeds, and loads them incrementally into **P
 guarded by **Great Expectations** quality gates and a **retrieval-quality evaluation** (recall@k, MRR).
 It does not call an LLM; it focuses on making the retrieval layer trustworthy.
 
-
+```mermaid
+flowchart LR
+    S["data/inbox<br/>jsonl / txt drops"] --> R{"changed?<br/>doc hash"}
+    R -- no --> X["skip"]
+    R -- yes --> P["PII redaction"] --> C["chunk + overlap"] --> D["dedupe<br/>content hash"] --> E["embed<br/>fastembed bge-small"] --> V[("pgvector<br/>HNSW index")]
+    V --> Q["Great Expectations<br/>+ freshness check"]
+    V --> EV["recall at 5 / MRR<br/>labeled queries"]
+```
 
 ## Pipeline behavior
 
@@ -50,36 +57,4 @@ python scripts/run_eval.py --k 5
 Run it under Airflow (development setup, first start is slow):
 
 ```bash
-docker compose --profile airflow up airflow      # UI at http://localhost:8080 (credentials printed in the logs)
-```
-
-Unit tests need no database: `pytest -q`.
-Set `EMBEDDING_BACKEND=hash` to run everything without downloading a model (retrieval quality will be much lower).
-
-## Repository layout
-
-```
-src/rag_pipeline/  redact, chunking, dedupe, embeddings, pipeline, store (pgvector), memory_store, quality, evaluation
-dags/              rag_ingest_hourly and rag_eval_daily
-scripts/           fetch_corpus, make_sample_corpus, run_ingest, run_eval, search_demo
-tests/             pytest (no database or model download needed)
-docs/RESULTS.md    template for your measured results
-```
-
-## Results
-
-> **Estimated values.** Derived from service limits, the pipeline configuration and typical laptop performance; actual figures vary by machine and environment.
-
-| Metric | Estimated |
-|---|---|
-| Documents / chunks | 25,000 / ~110K-130K |
-| First full ingest | ~10-25 min (CPU) |
-| Incremental run with no changes | ~1-3 min, 0 documents re-embedded |
-| Recall@5 (known-item retrieval) | ~0.80-0.90 |
-| Unit tests | 74 cases + 3 Great Expectations tests |
-
-## Limitations and next steps
-
-- Documents removed from the inbox are not deleted from the store yet (a delete/tombstone pass is the next step).
-- PII redaction is regex-based. It is a safety net, not a compliance guarantee; production systems should add an NER-based detector.
-- Add hybrid search (BM25 + vectors) and a re-ranker, and compare recall against the current baseline.
+docker compose --profile airflow up airflow      # UI at
