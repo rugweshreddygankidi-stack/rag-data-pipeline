@@ -5,14 +5,7 @@ removes PII, chunks, deduplicates, embeds, and loads them incrementally into **P
 guarded by **Great Expectations** quality gates and a **retrieval-quality evaluation** (recall@k, MRR).
 It does not call an LLM; it focuses on making the retrieval layer trustworthy.
 
-```mermaid
-flowchart LR
-    S[data/inbox<br/>jsonl / txt drops] --> R{changed?<br/>doc hash}
-    R -- no --> X[skip]
-    R -- yes --> P[PII redaction] --> C[chunk + overlap] --> D[dedupe<br/>content hash] --> E[embed<br/>fastembed bge-small] --> V[(pgvector<br/>HNSW index)]
-    V --> Q[Great Expectations<br/>+ freshness check]
-    V --> EV[recall@5 / MRR<br/>labeled queries]
-```
+
 
 ## Pipeline behavior
 
