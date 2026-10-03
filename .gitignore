@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+data/inbox/*.jsonl
+data/inbox/*.txt
+data/eval/*.jsonl
+.DS_Store
