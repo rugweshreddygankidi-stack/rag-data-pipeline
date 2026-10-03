@@ -1,0 +1,7 @@
+# Runtime (scripts run outside Airflow)
+fastembed>=0.3
+psycopg[binary]>=3.1
+pgvector>=0.2.5
+numpy<2
+pandas>=2.0,<2.2
+great-expectations==0.18.19

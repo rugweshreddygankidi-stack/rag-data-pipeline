@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+      POSTGRES_DB: rag
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag"]
+      interval: 5s
+      retries: 10
+
+  # Development-only Airflow (single container). First start installs the extra packages, so it is slow.
+  airflow:
+    image: apache/airflow:2.9.3-python3.11
+    command: standalone
+    profiles: ["airflow"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      _PIP_ADDITIONAL_REQUIREMENTS: "fastembed psycopg[binary] pgvector great-expectations==0.18.19"
+      PYTHONPATH: /opt/airflow/src
+      RAG_DSN: postgresql://rag:rag@postgres:5432/rag
+      DATA_DIR: /opt/airflow/data
+      EMBEDDING_BACKEND: ${EMBEDDING_BACKEND:-fastembed}
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+
+volumes:
+  pgdata:
